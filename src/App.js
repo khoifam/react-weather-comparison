@@ -1,16 +1,58 @@
 import React from 'react';
 import axios from 'axios';
+import { Chart as ChartJS } from 'chart.js/auto';
+import { Line } from 'react-chartjs-2';
 
 class App extends React.Component {
 
   constructor(props) {
+    console.log("================================================================================")
     console.log("App Constructor STARTS----------------------------------")
     super(props);
     this.apikey = '8ab2eeb364f972411c18856827ac96b5';
     this.state = {
-      
+      chartData : {
+        labels: [...Array(40).keys()],
+        datasets: [
+          {
+            id: 0,
+            label: 'Label1',
+            data: [69, 69, 69, 69],
+          },
+          {
+            id: 1,
+            label: 'Label2',
+            data: [55, 55, 55, 55],
+          },
+        ],
+      },
     };
+    this.handleGraphChange = this.handleGraphChange.bind(this)
     console.log("App Constructor ENDS----------------------------------")
+  }
+
+  handleGraphChange(id, newChartData) {
+
+    console.log("this.state.chartData: ", this.state.chartData)
+    var output2 = {...this.state.chartData};
+    var output = JSON.parse(JSON.stringify(this.state.chartData))
+    console.log("output: ", output)
+    console.log("output spread: ", output2)
+    console.log("newChartData: ", newChartData);
+    console.log("index operator: ", newChartData.datasets[0].data)
+    
+    setTimeout(() => { 
+      if (id == 0) {
+        output.datasets[0] = newChartData.datasets[0];
+      } else if (id == 1) {
+        output.datasets[1] = newChartData.datasets[0];
+      }
+      this.setState({
+        chartData : output,
+      });
+      console.log("output after edit: ", output)
+      console.log("this.state.chartData: ", this.state.chartData);
+    }, 0);
   }
 
   render() {
@@ -18,9 +60,21 @@ class App extends React.Component {
       <div className="app">
         <div className='location1'>
           <div className='search'>
-            <Location apikey={this.apikey} />
+            <Location 
+              apikey={this.apikey} 
+              id={0} 
+              onGraphChange={this.handleGraphChange}
+            />
             <br></br><hr></hr><br></br>
-            {/* <Location apikey={this.apikey} /> */}
+            <Location 
+              apikey={this.apikey} 
+              id={1}
+              onGraphChange={this.handleGraphChange}
+            />
+            <br></br><hr></hr><br></br>
+            <Line 
+              data={this.state.chartData}
+            />
           </div>
         </div>
       </div>
@@ -34,12 +88,23 @@ class Location extends React.Component {
     console.log("Location Constructor STARTS----------------------------------");
     super(props);
     this.state = {
+      id : this.props.id,
       locationName : 'London',
       locationTextField : 'London',
       country : 'GB',
       temperatureC : '',
       temperatureF : '',
+      // chartData : {
+      //   labels: [...Array(40).keys()],
+      //   datasets: [{
+      //     label: 'Label',
+      //     data: [],
+      //   }],
+      // },
     };
+    this.getCoords = this.getCoords.bind(this);
+    this.getWeather = this.getWeather.bind(this);
+    this.getForecast = this.getForecast.bind(this);
     this.getCoords("London")
     console.log("Location Constructor ENDS----------------------------------");
   };
@@ -51,7 +116,7 @@ class Location extends React.Component {
     axios.get(geocodingURL).then((response) => {
       console.log("AXIOS GET GEOCODINGURL STARTS---------------");
       console.log(response.data);
-      console.log(response.data[0].lat, response.data[0].lon);
+      console.log("LAT LON: ", response.data[0].lat, response.data[0].lon);
       console.log("AXIOS GET GEOCODINGURL ENDS---------------");
 
       this.getWeather(response.data[0].lat, response.data[0].lon);
@@ -84,9 +149,23 @@ class Location extends React.Component {
     axios.get(forecastURL).then((response) => {
       console.log("getForecast STARTS---------------");
       console.log(response.data);
-      for (let i = 0; i < 5; i++) {
-        console.log("MIN MAX:", response.data.list[i*8].main.temp_min - 273.15, response.data.list[i*8].main.temp_max - 273.15)
+      const tempArr = []
+      for (let i = 0; i < 40; i++) {
+        tempArr.push(Math.round(response.data.list[i].main.temp - 273.15));
       }
+      console.log("tempArr: ", tempArr);
+      this.props.onGraphChange(
+        this.state.id,
+        {
+          labels : [...Array(40).keys()],
+          datasets : [{
+            id : this.state.id,
+            label : response.data.city.name + ', ' + response.data.city.country,
+            data : tempArr,
+          }]
+        }
+      );
+      console.log(this.state.chartData)
     });
   }
 
@@ -116,6 +195,9 @@ class Location extends React.Component {
         <p>{this.state.locationName}, {this.state.country}</p>
         <p>{this.state.temperatureC} °C</p>
         <p>{this.state.temperatureF} °F</p>
+
+        
+
         {console.log("rendered")}
       </div>
     );
