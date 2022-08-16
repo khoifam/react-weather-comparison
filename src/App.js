@@ -83,7 +83,10 @@ class App extends React.Component {
               options={{
                 maintainAspectRatio: true, 
                 responsive: false,
-                scales: {y: {title: {display: true, text: '°C',}}}
+                scales: {
+                  y: {title: {display: true, text: '°C',}},
+                  x: {title: {display: true, text: 'Time',}}
+                }
               }}
             />
           </div>
