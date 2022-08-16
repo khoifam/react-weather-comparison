@@ -25,6 +25,7 @@ class App extends React.Component {
             data: [55, 55, 55, 55],
           },
         ],
+        
       },
     };
     this.handleGraphChange = this.handleGraphChange.bind(this)
@@ -60,20 +61,30 @@ class App extends React.Component {
       <div className="app">
         <div className='location1'>
           <div className='search'>
+            <h2>Weather Comparison App</h2>
             <Location 
               apikey={this.apikey} 
               id={0} 
               onGraphChange={this.handleGraphChange}
+              initLocation='London'
             />
-            <br></br><hr></hr><br></br>
+            <hr></hr>
             <Location 
               apikey={this.apikey} 
               id={1}
               onGraphChange={this.handleGraphChange}
+              initLocation='New York'
             />
-            <br></br><hr></hr><br></br>
+            <hr></hr>
             <Line 
               data={this.state.chartData}
+              height={250}
+              width={400}
+              options={{
+                maintainAspectRatio: true, 
+                responsive: false,
+                scales: {y: {title: {display: true, text: '°C',}}}
+              }}
             />
           </div>
         </div>
@@ -89,23 +100,16 @@ class Location extends React.Component {
     super(props);
     this.state = {
       id : this.props.id,
-      locationName : 'London',
-      locationTextField : 'London',
-      country : 'GB',
+      locationName : '',
+      locationTextField : '',
+      country : '',
       temperatureC : '',
       temperatureF : '',
-      // chartData : {
-      //   labels: [...Array(40).keys()],
-      //   datasets: [{
-      //     label: 'Label',
-      //     data: [],
-      //   }],
-      // },
     };
     this.getCoords = this.getCoords.bind(this);
     this.getWeather = this.getWeather.bind(this);
     this.getForecast = this.getForecast.bind(this);
-    this.getCoords("London")
+    this.getCoords(this.props.initLocation);
     console.log("Location Constructor ENDS----------------------------------");
   };
 
@@ -154,6 +158,12 @@ class Location extends React.Component {
         tempArr.push(Math.round(response.data.list[i].main.temp - 273.15));
       }
       console.log("tempArr: ", tempArr);
+      var color = '';
+      if (this.state.id == 0) {
+        color = 'rgba(245, 179, 66, 1)';
+      } else {
+        color = 'rgba(66, 147, 245, 1)';
+      }
       this.props.onGraphChange(
         this.state.id,
         {
@@ -162,7 +172,10 @@ class Location extends React.Component {
             id : this.state.id,
             label : response.data.city.name + ', ' + response.data.city.country,
             data : tempArr,
-          }]
+            borderColor: color,
+            
+          }],
+          
         }
       );
       console.log(this.state.chartData)
